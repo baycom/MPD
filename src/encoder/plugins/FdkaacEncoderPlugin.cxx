@@ -91,7 +91,7 @@ PreparedFdkaacEncoder::PreparedFdkaacEncoder(const ConfigBlock &block)
 		}else if(!strcmp(value, "eld")) {
 			aot=AOT_ER_AAC_ELD;
 		}else {
-			aot=AOT_AAC_LC;
+			throw std::runtime_error("No valid aot string found.\n");
 		}
 	}
 	aacenc_afterburner = block.GetBlockValue("aacenc_afterburner", true);
