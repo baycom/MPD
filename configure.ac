@@ -627,6 +627,21 @@ if test x$enable_libwrap = xyes; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl D-Bus
+dnl ---------------------------------------------------------------------------
+
+MPD_ENABLE_AUTO_PKG(dbus, DBUS, [dbus-1], [D-Bus support], [dbus-1 not found])
+
+AC_ARG_ENABLE(udisks,
+	AS_HELP_STRING([--enable-udisks],
+		[support for removable media via udisks2]),,
+	[enable_udisks=auto])
+
+MPD_DEPENDS([enable_udisks], [found_dbus], [support for removable media via udisks2], [dbus-1 not found])
+MPD_AUTO(udisks, [support for removable media via udisks2], [udisks not available], [found_udisks=yes])
+MPD_DEFINE_CONDITIONAL(enable_udisks, ENABLE_UDISKS, [support for removable media via udisks2])
+
+dnl ---------------------------------------------------------------------------
 dnl Metadata Plugins
 dnl ---------------------------------------------------------------------------
 
@@ -791,6 +806,9 @@ if test x$enable_neighbor_plugins = xauto; then
 		enable_neighbor_plugins=yes
 	fi
 	if test x$enable_upnp = xyes; then
+		enable_neighbor_plugins=yes
+	fi
+	if test x$enable_udisks = xyes; then
 		enable_neighbor_plugins=yes
 	fi
 fi
@@ -1123,11 +1141,6 @@ MPD_ENABLE_AUTO_PKG(twolame_encoder, TWOLAME, [twolame],
 dnl ------------------------------- WAVE Encoder ------------------------------
 MPD_DEFINE_CONDITIONAL(enable_wave_encoder, ENABLE_WAVE_ENCODER,
 	[PCM wave encoder plugin])
-
-dnl ------------------------------- FDK AAC Encoder ------------------------------
-MPD_ENABLE_AUTO_PKG(fdkaac_encoder, FDKAAC, [fdk-aac],
-	[FDK AAC encoder plugin], [libfdk-aac not found])
-
 
 dnl --------------------------- encoder plugins test --------------------------
 if test x$enable_vorbis_encoder != xno ||
@@ -1508,6 +1521,8 @@ results(soxr, [libsoxr])
 results(libmpdclient, [libmpdclient])
 results(inotify, [inotify])
 results(sqlite, [SQLite])
+results(dbus, [DBUS])
+results(udisks, [UDISKS])
 
 printf '\nMetadata support:\n\t'
 results(id3,[ID3])
