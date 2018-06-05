@@ -140,9 +140,11 @@ PreparedFdkaacEncoder::Open(AudioFormat &audio_format)
 	AACENC_InfoStruct *info = (AACENC_InfoStruct *)calloc(sizeof(AACENC_InfoStruct), 1);
 	AacEncoder = (HANDLE_AACENCODER*)calloc(sizeof(HANDLE_AACENCODER), 1);
 	AACENC_ERROR res = aacEncOpen ( AacEncoder, 0, 0);
-	if (res != AACENC_OK)
+	if (res != AACENC_OK) {
+		free(AacEncoder);
+		free(info);
 		throw std::runtime_error("aacEncOpen failed");
-
+	}
 	try {
 		fdkaac_encoder_setup(AacEncoder, aot, bitrate, quality, aacenc_afterburner, audio_format);
 		if (aacEncInfo(*AacEncoder, info) != AACENC_OK) {
