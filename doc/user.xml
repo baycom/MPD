@@ -3183,6 +3183,48 @@ run</programlisting>
       </section>
 
       <section>
+        <title><varname>aac</varname></title>
+
+        <para>
+          Encodes into AAC using the <ulink
+          url="https://github.com/mstorsjo/fdk-aac"><application>FDK-AAC</application></ulink>
+          library.
+        </para>
+
+        <informaltable>
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry>Setting</entry>
+                <entry>Description</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>
+                  <varname>quality</varname>
+                </entry>
+                <entry>
+                  Sets the quality for VBR. 0 disables VBR, values from 1 (high quality) to 8 (low quality) set the is the highest quality. 
+                  Overrides 
+                  <varname>bitrate</varname>.
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <varname>bitrate</varname>
+                </entry>
+                <entry>
+                  Sets the bit rate in kilobit per second.  Cannot be
+                  used with <varname>quality</varname>.
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </informaltable>
+      </section>
+
+      <section>
         <title><varname>null</varname></title>
 
         <para>
