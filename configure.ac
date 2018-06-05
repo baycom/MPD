@@ -1141,6 +1141,9 @@ MPD_ENABLE_AUTO_PKG(twolame_encoder, TWOLAME, [twolame],
 dnl ------------------------------- WAVE Encoder ------------------------------
 MPD_DEFINE_CONDITIONAL(enable_wave_encoder, ENABLE_WAVE_ENCODER,
 	[PCM wave encoder plugin])
+dnl ------------------------------- FDK AAC Encoder ------------------------------
+MPD_ENABLE_AUTO_PKG(fdkaac_encoder, FDKAAC, [fdk-aac],
+	[FDK AAC encoder plugin], [libfdk-aac not found])
 
 dnl --------------------------- encoder plugins test --------------------------
 if test x$enable_vorbis_encoder != xno ||
