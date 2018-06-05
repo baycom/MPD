@@ -167,7 +167,7 @@ FdkaacEncoder::Write(const void *data, size_t length)
 
 	size_t frame_size = info.frameLength*audio_format.GetSampleSize()*audio_format.channels;	// bytes
 
-	int read_buffer_pos=0;
+	size_t read_buffer_pos=0;
 	while(length) {
 
 		size_t bytes_to_copy = frame_size-input_buffer_pos;
