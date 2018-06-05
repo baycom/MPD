@@ -35,9 +35,9 @@
 
 class FdkaacEncoder final : public Encoder {
 	const AudioFormat audio_format;
-	HANDLE_AACENCODER *AacEncoder;
-	AACENC_InfoStruct *info;
-	int input_buffer_pos = 0;
+	HANDLE_AACENCODER AacEncoder;
+	AACENC_InfoStruct info;
+	size_t input_buffer_pos = 0;
 
 	ReusableArray<unsigned char, 32768> output_buffer;
 	ReusableArray<unsigned char, 32768> input_buffer;
@@ -45,7 +45,7 @@ class FdkaacEncoder final : public Encoder {
 
 public:
 	FdkaacEncoder(const AudioFormat _audio_format,
-		    HANDLE_AACENCODER *_AacEncoder, AACENC_InfoStruct *_info)
+		    HANDLE_AACENCODER &_AacEncoder, AACENC_InfoStruct &_info)
 		:Encoder(false),audio_format(_audio_format),AacEncoder(_AacEncoder),info(_info) {}
 
 	~FdkaacEncoder() override;
@@ -56,7 +56,6 @@ public:
 };
 
 class PreparedFdkaacEncoder final : public PreparedEncoder {
-	HANDLE_AACENCODER *AacEncoder;
 	AUDIO_OBJECT_TYPE aot;
 	int bitrate;
 	int quality;
@@ -69,7 +68,6 @@ public:
 	Encoder *Open(AudioFormat &audio_format) override;
 
 	const char *GetMimeType() const override {
-		fprintf(stderr, "GetMimeType\n");
 		return "audio/aac";
 	}
 };
@@ -135,25 +133,21 @@ int quality, bool aacenc_afterburner, const AudioFormat &audio_format)
 Encoder *
 PreparedFdkaacEncoder::Open(AudioFormat &audio_format)
 {
+	HANDLE_AACENCODER AacEncoder;
 	audio_format.format = SampleFormat::S16;
 	audio_format.channels = 2;
-	AACENC_InfoStruct *info = (AACENC_InfoStruct *)calloc(sizeof(AACENC_InfoStruct), 1);
-	AacEncoder = (HANDLE_AACENCODER*)calloc(sizeof(HANDLE_AACENCODER), 1);
-	AACENC_ERROR res = aacEncOpen ( AacEncoder, 0, 0);
+	AACENC_InfoStruct info;
+	AACENC_ERROR res = aacEncOpen ( &AacEncoder, 0, 0);
 	if (res != AACENC_OK) {
-		free(AacEncoder);
-		free(info);
 		throw std::runtime_error("aacEncOpen failed");
 	}
 	try {
-		fdkaac_encoder_setup(AacEncoder, aot, bitrate, quality, aacenc_afterburner, audio_format);
-		if (aacEncInfo(*AacEncoder, info) != AACENC_OK) {
+		fdkaac_encoder_setup(&AacEncoder, aot, bitrate, quality, aacenc_afterburner, audio_format);
+		if (aacEncInfo(AacEncoder, &info) != AACENC_OK) {
 			throw std::runtime_error("Unable to get the encoder info\n");
 		}
 	} catch (...) {
-		aacEncClose (AacEncoder);
-		free(AacEncoder);
-		free(info);
+		aacEncClose (&AacEncoder);
 		throw;
 	}
 
@@ -162,9 +156,7 @@ PreparedFdkaacEncoder::Open(AudioFormat &audio_format)
 
 FdkaacEncoder::~FdkaacEncoder()
 {
-	aacEncClose (AacEncoder);
-	free(AacEncoder);
-	free(info);
+	aacEncClose (&AacEncoder);
 }
 
 void
@@ -173,7 +165,7 @@ FdkaacEncoder::Write(const void *data, size_t length)
 	assert(output_begin == output_end);
 	const unsigned char *src = (const unsigned char *)data;
 
-	int frame_size = info->frameLength*audio_format.GetSampleSize()*audio_format.channels;	// bytes
+	size_t frame_size = info.frameLength*audio_format.GetSampleSize()*audio_format.channels;	// bytes
 
 	int read_buffer_pos=0;
 	while(length) {
@@ -196,7 +188,7 @@ FdkaacEncoder::Write(const void *data, size_t length)
 		src += bytes_to_copy;
 
 		if(input_buffer_pos == frame_size) {
-			const auto dest = output_buffer.Get(info->maxOutBufBytes);
+			const auto dest = output_buffer.Get(info.maxOutBufBytes);
 			int bytes_out = 0;
 
 			AACENC_BufDesc in_buf;
@@ -217,7 +209,7 @@ FdkaacEncoder::Write(const void *data, size_t length)
 
 			int out_identifier = OUT_BITSTREAM_DATA;
 			void *out_ptr = dest;
-			int out_size = info->maxOutBufBytes;
+			int out_size = info.maxOutBufBytes;
 			int out_elem_size = 1;
 			out_buf.numBufs = 1;
 			out_buf.bufs = &out_ptr;
@@ -225,7 +217,7 @@ FdkaacEncoder::Write(const void *data, size_t length)
 			out_buf.bufSizes = &out_size;
 			out_buf.bufElSizes = &out_elem_size;
 
-			AACENC_ERROR res = aacEncEncode ( *AacEncoder, &in_buf, &out_buf, &in_args, &out_args );
+			AACENC_ERROR res = aacEncEncode ( AacEncoder, &in_buf, &out_buf, &in_args, &out_args );
 			if(res != AACENC_OK) {
 				if (res == AACENC_ENCODE_EOF) {
 					throw std::runtime_error("fdkaac encoder failed");
