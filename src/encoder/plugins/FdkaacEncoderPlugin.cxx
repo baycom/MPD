@@ -34,13 +34,19 @@
 #include <string.h>
 
 class FdkaacEncoder final : public Encoder {
+	/* Audio format from instance */
 	const AudioFormat audio_format;
+	/* FDK AAC encoder instance */
 	HANDLE_AACENCODER AacEncoder;
+	/* FDK AAC codec info */
 	AACENC_InfoStruct info;
+	/* buffer position for input samples*/ 
 	size_t input_buffer_pos = 0;
 
-	ReusableArray<unsigned char, 32768> output_buffer;
+	/* input buffer for raw data */
 	ReusableArray<unsigned char, 32768> input_buffer;
+	/* output buffer for aac data */
+	ReusableArray<unsigned char, 32768> output_buffer;
 	unsigned char *output_begin = nullptr, *output_end = nullptr, *input_begin = nullptr;
 
 public:
@@ -170,10 +176,7 @@ FdkaacEncoder::Write(const void *data, size_t length)
 	size_t read_buffer_pos=0;
 	while(length) {
 
-		size_t bytes_to_copy = frame_size-input_buffer_pos;
-		if(bytes_to_copy > length) {
-			bytes_to_copy = length;	
-		}
+		size_t bytes_to_copy = std::min(frame_size-input_buffer_pos, length);
 
 		const auto input_buf = input_buffer.Get(bytes_to_copy);
 		if(input_begin == nullptr) {
